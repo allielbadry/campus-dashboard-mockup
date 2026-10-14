@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campus Dashboard Tiles</title>
+<style>
+/* Tokens: app/src/styles.css :root (DESIGN.md), unchanged. */
+:root {
+  --navy: #1a2744; --navy-dark: #0f1d38; --orange-ink: #b8552f; --red-brand: #c4432f;
+  --bg: #f1f5f9; --card: #ffffff; --line: #e2e8f0; --line-strong: #cbd5e1; --field-line: #7d8ba0;
+  --ink: #1e293b; --ink-mid: #475569; --muted: #586679;
+  --green: #16a34a; --amber: #f59e0b; --red: #dc2626; --critical: #7f1d1d;
+  --green-ink: #15803d; --amber-ink: #b45309; --red-ink: #b91c1c;
+  --red-tint: #fee2e2; --orange-tint: #ffedd5; --amber-tint: #fef3c7; --green-tint: #dcfce7;
+  --red-wash: #fef2f2; --amber-wash: #fefce8; --green-wash: #f0fdf4;
+  font-family: Arial, Helvetica, sans-serif;
+  accent-color: var(--navy);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+::selection { background: var(--navy); color: #fff; }
+button, select, input { font: inherit; }
+:focus-visible { outline: 2px solid var(--orange-ink); outline-offset: 1px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.topbar { background: var(--card); border-bottom: 1px solid var(--line); padding: 10px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+.app-title { margin: 0; font-size: inherit; font-weight: 400; }
+.title-italic { font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 22px; color: var(--red-brand); }
+.title-bold { font-family: Georgia, 'Times New Roman', serif; font-weight: 700; font-size: 22px; color: var(--navy); }
+.title-date { font-size: 11px; color: var(--muted); letter-spacing: .04em; margin-top: 1px; }
+.mock { margin-left: auto; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-size: 11px; color: var(--muted); border: 1px dashed var(--line-strong); border-radius: 6px; padding: 4px 10px; }
+.mock b { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.mock label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+.mock select { border: 1px solid var(--field-line); border-radius: 4px; padding: 2px 6px; background: var(--card); color: var(--navy); font-size: 11px; }
+
+main { padding: 24px 20px 48px; }
+/* Mockup notice (Ali, 2026-10-14): a tint and its sentence, no side stripe (DESIGN.md). */
+.notice { max-width: 1180px; margin: 0 auto 20px; padding: 10px 14px; border-radius: 6px; background: var(--amber-tint); color: var(--amber-ink); font-size: 12px; font-weight: 700; }
+#app { max-width: 1180px; margin: 0 auto; }
+.crumbs ol { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0 0 0 -2px; padding: 0; font-size: 12px; }
+.crumbs li { display: inline-flex; align-items: center; gap: 4px; }
+.crumbs li + li::before { content: '/'; color: var(--line-strong); }
+.crumbs button { border: 0; background: none; padding: 2px; color: var(--navy); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; border-radius: 4px; }
+.crumbs button:hover { background: var(--line); }
+.crumbs [aria-current] { color: var(--ink); font-weight: 700; }
+.pagehead { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; }
+.crumbs + .pagehead { margin-top: 12px; }
+h2 { font-size: 13px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--navy); margin: 0; }
+h2:focus { outline: none; }
+.lede { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: var(--card); color: var(--ink-mid); font-size: 11px; font-weight: 600; padding: 5px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line-strong); }
+.seg button[aria-pressed="true"] { background: var(--navy); color: #fff; }
+.seg button:focus-visible { outline: 2px solid var(--orange-ink); outline-offset: -2px; }
+
+/* Summary row: KPI cards (3px Night Navy edge). */
+.kpis { display: flex; gap: 12px; margin-bottom: 28px; }
+.kpi-card { flex: 1 1 0; min-width: 0; background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--navy-dark); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.kpi-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.kpi-note { font-size: 11px; color: var(--muted); }
+.kpi-value { font-size: 24px; font-weight: 700; color: var(--navy); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.kpi-value small { font-size: 11px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
+.kpi-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+
+/* Score bar = the drawer's band bar (.rv-bar): four band zones, the fill placed by bandPos, so where it
+   stops says the band. A Sample or empty score gets the plain grey track: a number, never a verdict. */
+.bar { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; height: 10px; }
+.bar > span { border-radius: 2px; }
+.bar > span:nth-child(1) { background: var(--red-tint); }
+.bar > span:nth-child(2) { background: var(--orange-tint); }
+.bar > span:nth-child(3) { background: var(--amber-tint); }
+.bar > span:nth-child(4) { background: var(--green-tint); }
+.bar.plain { display: block; background: var(--line); border-radius: 2px; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; opacity: .9; background: var(--fill, var(--navy)); transform-origin: left; }
+/* Network card: the score on the left, a hairline, then the six domains in two columns of three. Each domain
+   reads name and value on one line with its bar full width underneath (ui-ux-pro-max: direct labels, sorted
+   bars), so a long name never squeezes its bar and the eye never crosses a bar to find the number. */
+.split { display: grid; grid-template-columns: minmax(200px, 280px) minmax(0, 1fr); align-items: center; }
+.split-score { display: flex; flex-direction: column; gap: 10px; padding-right: 28px; }
+.dbars { list-style: none; margin: 0; padding: 0 0 0 28px; border-left: 1px solid var(--line); display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, auto); grid-auto-flow: column; gap: 14px 40px; font-size: 12px; }
+.dbars li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 6px 12px; }
+.dbars li > span:last-child { grid-column: 1 / -1; }
+.dname { color: var(--ink); display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; }
+.dbars b { color: var(--navy); font-variant-numeric: tabular-nums; }
+.dbars b.is-sample { font-style: italic; }
+.dbars b.none { color: var(--muted); font-weight: 400; font-style: italic; }
+@media (max-width: 900px) { .dbars { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; gap: 12px; } }
+@media (max-width: 640px) {
+  .split { grid-template-columns: 1fr; }
+  .split-score { padding: 0 0 16px; }
+  .dbars { border-left: 0; border-top: 1px solid var(--line); padding: 16px 0 0; }
+}
+
+.b-strong { --fill: var(--green); --wash: var(--green-wash); } .b-needs { --fill: var(--amber); --wash: var(--amber-wash); }
+.b-risk { --fill: var(--red); --wash: var(--red-wash); } .b-crit { --fill: var(--critical); --wash: var(--red-wash); } .b-none { --fill: var(--line-strong); }
+
+.grid { display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 12px; }
+.tile { display: flex; flex-direction: column; gap: 12px; text-align: left; background: var(--wash, var(--card)); color: var(--ink); border: 1px solid var(--line);
+  border-top: 3px solid var(--fill); border-radius: 6px; padding: 14px; font-size: 12px; min-width: 0; } /* impeccable-disable-line border-accent-on-rounded -- the top edge carries the score colour, like the KPI and group card edges */
+button.tile { cursor: pointer; }
+button.tile:hover { box-shadow: inset 0 0 0 1px var(--navy); }
+button.tile:focus-visible { box-shadow: inset 0 0 0 2px var(--orange-ink); outline: none; }
+.tile-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.tile-name { font-size: 13px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--navy); line-height: 1.3; }
+.tile-value-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tile-value { font-size: 24px; font-weight: 700; color: var(--navy); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+/* An empty score reads as body text, not as a 11px tag (audit 2026-10-14). */
+.tile-none { font-size: 12px; color: var(--muted); }
+.sample { flex: none; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tile.is-sample { border-style: dashed; border-top-style: solid; }
+
+.matrix-wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 6px; }
+.matrix { border-collapse: collapse; width: 100%; min-width: 760px; table-layout: fixed; font-size: 12px; font-variant-numeric: tabular-nums; }
+.matrix th { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-align: center; padding: 10px 6px; border-bottom: 1px solid var(--line); line-height: 1.3; }
+.matrix th:first-child { text-align: left; padding-left: 14px; width: 250px; }
+.matrix th i { font-style: normal; color: var(--muted); }
+.matrix td { padding: 3px; text-align: center; }
+.matrix td:first-child { text-align: left; padding: 6px 14px; white-space: nowrap; }
+/* The campus column stays put while the domains scroll under it on a phone. */
+.matrix th:first-child, .matrix td:first-child { position: sticky; left: 0; z-index: 1; background: var(--card); box-shadow: 1px 0 0 var(--line); }
+.matrix td:first-child button { border: 0; background: none; padding: 0; color: var(--navy); font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.matrix .cell { display: block; padding: 8px 4px; border-radius: 4px; font-weight: 700; color: var(--ink); }
+.matrix .cell.is-sample { font-style: italic; }
+.matrix .cell.none { color: var(--muted); font-weight: 400; font-style: italic; }
+
+.empty { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 18px; font-size: 12px; color: var(--ink-mid); max-width: 560px; line-height: 1.5; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .bar i { animation: grow .45s cubic-bezier(.16, 1, .3, 1) both; }
+  button.tile { transition: box-shadow .12s; }
+}
+@keyframes grow { from { transform: scaleX(0); } }
+@media (max-width: 1000px) { .grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); } .kpis { flex-wrap: wrap; } .kpi-card { flex-basis: 260px; } }
+@media (max-width: 640px) {
+  .topbar, main { padding-left: 12px; padding-right: 12px; }
+  .mock { margin-left: 0; }
+  .kpis { flex-direction: column; }
+  .kpi-card { flex-basis: auto; }
+  .grid { grid-template-columns: 1fr; gap: 8px; }
+  /* Phone: name and score share one row, so ten campuses fit about two screens instead of four. */
+  .tile { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; padding: 12px; }
+  .tile-value-row { grid-column: 2; grid-row: 1; justify-content: flex-end; }
+  .tile .bar { grid-column: 1 / -1; }
+}
+@media (pointer: coarse) {
+  .crumbs button, .matrix td:first-child button { min-height: 44px; padding: 0 6px; }
+  .seg button { min-height: 44px; }
+  .mock select { min-height: 44px; font-size: 16px; }
+  .mock input { width: 22px; height: 22px; }
+  .mock label { min-height: 44px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1 class="app-title"><span class="title-italic">Roster</span> <span class="title-bold">&amp; Staff Plan</span></h1>
+    <div class="title-date">Campus Dashboard</div>
+  </div>
+  <div class="mock" aria-label="Mockup controls">
+    <b>Mockup</b>
+    <label><input type="checkbox" id="samples" checked> Sample numbers where there is no data</label>
+    <label>Sort <select id="sort"><option value="worst">Worst first</option><option value="name">A to Z</option></select></label>
+  </div>
+</header>
+<main>
+  <p class="notice" role="note">This is a mockup only. It doesn't use real data and has nothing to do with the Director Dashboard.</p>
+  <div id="app"></div>
+</main>
+<div class="sr" role="status" aria-live="polite" id="live"></div>
+
+<script>
+const DATA = [{"campus":"Braeside","month":"2026-09","groups":[{"name":"Wandering Willows (A)","staffing":90,"staffingBand":"Needs Improvement","lead":77,"leadBand":"Needs Improvement","mix":77,"mixBand":"Needs Improvement","overall":82,"verdict":"Not compliant","why":"Ratio gap","days":[[92,77,77],[90,77,77],[84,77,77],[91,77,77],[92,77,77]]},{"name":"Jumping Junipers (A)","staffing":60,"staffingBand":"At Risk","lead":93,"leadBand":"Needs Improvement","mix":89,"mixBand":"Strong","overall":79,"verdict":"Not compliant","why":"Ratio gap","days":[[57,96,89],[66,90,90],[57,96,89],[66,90,90],[57,96,89]]},{"name":"Jumping Junipers (B)","staffing":88,"staffingBand":"Needs Improvement","lead":"Not required","leadBand":"Not required","mix":89,"mixBand":"Strong","overall":89,"verdict":"Not compliant","why":"Ratio gap","days":[[95,null,89],[77,null,90],[95,null,89],[80,null,90],[95,null,89]]},{"name":"Jumping Junipers (C)","staffing":80,"staffingBand":"Needs Improvement","lead":"Not required","leadBand":"Not required","mix":87,"mixBand":"Strong","overall":83,"verdict":"Not compliant","why":"Ratio gap","days":[[89,null,84],[77,null,90],[86,null,84],[77,null,90],[69,null,88]]},{"name":"Pondering Pines (A)","staffing":60,"staffingBand":"At Risk","lead":88,"leadBand":"Needs Improvement","mix":73,"mixBand":"Needs Improvement","overall":72,"verdict":"Not compliant","why":"Ratio gap","days":[[63,88,72],[68,88,73],[54,88,73],[58,88,75],[56,88,73]]},{"name":"Pondering Pines (B)","staffing":73,"staffingBand":"At Risk","lead":"Not required","leadBand":"Not required","mix":70,"mixBand":"Needs Improvement","overall":72,"verdict":"Not compliant","why":"Ratio gap","days":[[74,null,72],[85,null,66],[64,null,73],[74,null,66],[66,null,73]]},{"name":"Pondering Pines (C)","staffing":73,"staffingBand":"At Risk","lead":"Not required","leadBand":"Not required","mix":70,"mixBand":"Needs Improvement","overall":72,"verdict":"Not compliant","why":"Ratio gap","days":[[74,null,72],[85,null,66],[64,null,73],[74,null,66],[66,null,73]]},{"name":"Roaring Redwoods","staffing":28,"staffingBand":"Critical","lead":85,"leadBand":"Needs Improvement","mix":70,"mixBand":"Needs Improvement","overall":58,"verdict":"Not compliant","why":"Ratio gap","days":[[26,75,67],[32,100,74],[26,75,67],[32,100,74],[21,75,68]]}]},{"campus":"Bridgeland","month":"2026-10","groups":[{"name":"Evergreen Jr","staffing":73,"staffingBand":"At Risk","lead":65,"leadBand":"At Risk","mix":67,"mixBand":"At Risk","overall":69,"verdict":"Not compliant","why":"Ratio gap","days":[[76,65,67],[66,65,67],[77,65,67],[71,65,67],[73,65,67]]},{"name":"Evergreen Sr","staffing":79,"staffingBand":"Needs Improvement","lead":65,"leadBand":"At Risk","mix":77,"mixBand":"Needs Improvement","overall":74,"verdict":"Not compliant","why":"Ratio gap","days":[[82,65,77],[76,65,77],[76,65,77],[78,65,77],[82,65,77]]}]},{"campus":"Centennial","month":"2026-09","groups":[{"name":"Wandering Willows (A)","staffing":100,"staffingBand":"Strong","lead":"Not required","leadBand":"Not required","mix":52,"mixBand":"Critical","overall":79,"verdict":"Not compliant","why":"Mentoring","days":[[100,null,55],[100,null,50],[100,null,50],[100,null,55],[100,null,50]]},{"name":"Wandering Willows (B)","staffing":45,"staffingBand":"Critical","lead":"Not required","leadBand":"Not required","mix":72,"mixBand":"Needs Improvement","overall":57,"verdict":"Not compliant","why":"Ratio gap","days":[[67,null,83],[29,null,65],[33,null,65],[67,null,83],[29,null,65]]},{"name":"Wandering Willows (C)","staffing":42,"staffingBand":"Critical","lead":"Not required","leadBand":"Not required","mix":65,"mixBand":"At Risk","overall":52,"verdict":"Not compliant","why":"Ratio gap","days":[[100,null,65],[6,null,65],[0,null,65],[100,null,65],[6,null,65]]},{"name":"Jumping Junipers","staffing":100,"staffingBand":"Strong","lead":"Not required","leadBand":"Not required","mix":57,"mixBand":"Critical","overall":81,"verdict":"Not compliant","why":"Ratio gap","days":[[98,null,56],[100,null,58],[100,null,56],[100,null,58],[100,null,56]]},{"name":"Pondering Pines","staffing":80,"staffingBand":"Needs Improvement","lead":"Not required","leadBand":"Not required","mix":74,"mixBand":"Needs Improvement","overall":77,"verdict":"Not compliant","why":"Ratio gap","days":[[83,null,73],[75,null,75],[83,null,73],[75,null,75],[83,null,73]]},{"name":"Roaring Redwoods","staffing":77,"staffingBand":"Needs Improvement","lead":"Not required","leadBand":"Not required","mix":74,"mixBand":"Needs Improvement","overall":76,"verdict":"Not compliant","why":"Ratio gap","days":[[78,null,75],[77,null,72],[77,null,75],[77,null,72],[77,null,75]]}]},{"campus":"McKnight","month":"2026-09","groups":[{"name":"Evergreen","staffing":83,"staffingBand":"Needs Improvement","lead":"Not required","leadBand":"Not required","mix":100,"mixBand":"Strong","overall":90,"verdict":"Not compliant","why":"Ratio gap","days":[[83,null,100],[83,null,100],[83,null,100],[83,null,100],[83,null,100]]},{"name":"Wandering Willows (A)","staffing":71,"staffingBand":"At Risk","lead":"Not required","leadBand":"Not required","mix":75,"mixBand":"Needs Improvement","overall":73,"verdict":"Not compliant","why":"Ratio gap","days":[[69,null,75],[72,null,75],[71,null,75],[72,null,75],[72,null,75]]},{"name":"Wandering Willows (A1)","staffing":71,"staffingBand":"At Risk","lead":"Not required","leadBand":"Not required","mix":75,"mixBand":"Needs Improvement","overall":73,"verdict":"Not compliant","why":"Ratio gap","days":[[69,null,75],[72,null,75],[71,null,75],[72,null,75],[72,null,75]]},{"name":"Wandering Willows (B)","staffing":87,"staffingBand":"Needs Improvement","lead":"Not required","leadBand":"Not required","mix":62,"mixBand":"At Risk","overall":76,"verdict":"Not compliant","why":"Ratio gap","days":[[85,null,62],[85,null,62],[94,null,63],[85,null,62],[85,null,62]]},{"name":"Wandering Willows (B1)","staffing":87,"staffingBand":"Needs Improvement","lead":"Not required","leadBand":"Not required","mix":62,"mixBand":"At Risk","overall":76,"verdict":"Not compliant","why":"Ratio gap","days":[[85,null,62],[85,null,62],[94,null,63],[85,null,62],[85,null,62]]},{"name":"Jumping Junipers","staffing":95,"staffingBand":"Strong","lead":"Not required","leadBand":"Not required","mix":75,"mixBand":"Needs Improvement","overall":87,"verdict":"Not compliant","why":"Ratio gap","days":[[95,null,75],[95,null,75],[95,null,75],[95,null,75],[95,null,75]]},{"name":"Pondering Pines","staffing":100,"staffingBand":"Strong","lead":"Not required","leadBand":"Not required","mix":75,"mixBand":"Needs Improvement","overall":89,"verdict":"Not compliant","why":"Ratio gap","days":[[99,null,75],[100,null,75],[100,null,75],[100,null,75],[100,null,75]]},{"name":"Roaring Redwoods","staffing":92,"staffingBand":"Strong","lead":"Not required","leadBand":"Not required","mix":71,"mixBand":"Needs Improvement","overall":83,"verdict":"Not compliant","why":"Ratio gap","days":[[95,null,72],[97,null,72],[85,null,71],[97,null,72],[85,null,71]]}]},{"campus":"New Brighton","month":"2026-09","groups":[{"name":"Evergreen","staffing":78,"staffingBand":"Needs Improvement","lead":65,"leadBand":"At Risk","mix":79,"mixBand":"Needs Improvement","overall":74,"verdict":"Not compliant","why":"Ratio gap","days":[[83,65,79],[88,65,79],[88,65,79],[89,65,79],[40,65,80]]},{"name":"Wandering Willows (A)","staffing":0,"staffingBand":"Critical","lead":"No Lead","leadBand":"No Lead","mix":75,"mixBand":"Needs Improvement","overall":32,"verdict":"Not compliant","why":"No Lead","days":[[0,null,75],[0,null,75],[0,null,75],[0,null,75],[0,null,75]]},{"name":"Wandering Willows (A1)","staffing":100,"staffingBand":"Strong","lead":"Not required","leadBand":"Not required","mix":75,"mixBand":"Needs Improvement","overall":89,"verdict":"Needs Improvement","why":null,"days":[[100,null,75],[100,null,75],[100,null,75],[100,null,75],[100,null,75]]},{"name":"Wandering Willows (B)","staffing":93,"staffingBand":"Strong","lead":75,"leadBand":"Needs Improvement","mix":83,"mixBand":"Strong","overall":85,"verdict":"Not compliant","why":"Ratio gap","days":[[91,75,83],[91,75,83],[100,75,83],[91,75,83],[94,75,83]]},{"name":"Wandering Willows (B1)","staffing":97,"staffingBand":"Strong","lead":"Not required","leadBand":"Not required","mix":83,"mixBand":"Strong","overall":91,"verdict":"Not compliant","why":"Ratio gap","days":[[95,null,83],[95,null,83],[100,null,83],[95,null,83],[100,null,83]]},{"name":"Wandering Willows (C)","staffing":96,"staffingBand":"Strong","lead":100,"leadBand":"Strong","mix":83,"mixBand":"Strong","overall":93,"verdict":"Not compliant","why":"Ratio gap","days":[[96,100,83],[96,100,83],[100,100,83],[96,100,83],[96,100,83]]},{"name":"Jumping Junipers","staffing":99,"staffingBand":"Strong","lead":75,"leadBand":"Needs Improvement","mix":73,"mixBand":"Needs Improvement","overall":84,"verdict":"Not compliant","why":"Ratio gap","days":[[98,75,73],[98,75,73],[100,75,73],[100,75,73],[100,75,73]]},{"name":"Pondering Pines","staffing":90,"staffingBand":"Needs Improvement","lead":75,"leadBand":"Needs Improvement","mix":72,"mixBand":"Needs Improvement","overall":80,"verdict":"Not compliant","why":"Ratio gap","days":[[89,75,72],[90,75,72],[90,75,72],[90,75,72],[90,75,72]]},{"name":"Roaring Redwoods","staffing":90,"staffingBand":"Strong","lead":75,"leadBand":"Needs Improvement","mix":68,"mixBand":"At Risk","overall":79,"verdict":"Not compliant","why":"Ratio gap","days":[[91,75,68],[90,75,68],[91,75,68],[90,75,68],[90,75,68]]}]},{"campus":"Strathmore","month":"2026-09","groups":[{"name":"Junior Preschool","staffing":71,"staffingBand":"At Risk","lead":"Not required","leadBand":"Not required","mix":88,"mixBand":"Strong","overall":78,"verdict":"Not compliant","why":"Ratio gap","days":[[74,null,88],[70,null,88],[70,null,88],[70,null,88],[70,null,88]]},{"name":"Senior Preschool","staffing":58,"staffingBand":"At Risk","lead":"Not required","leadBand":"Not required","mix":75,"mixBand":"Needs Improvement","overall":65,"verdict":"Not compliant","why":"Ratio gap","days":[[66,null,74],[56,null,75],[56,null,75],[56,null,75],[56,null,75]]}]},{"campus":"Walden","month":"2026-10","groups":[{"name":"Jumping Junipers","staffing":55,"staffingBand":"At Risk","lead":100,"leadBand":"Strong","mix":81,"mixBand":"Strong","overall":76,"verdict":"Not compliant","why":"Ratio gap","days":[[46,100,76],[67,100,88],[37,100,82],[78,100,81],[48,100,76]]},{"name":"Pondering Pines","staffing":71,"staffingBand":"At Risk","lead":100,"leadBand":"Strong","mix":78,"mixBand":"Needs Improvement","overall":82,"verdict":"Not compliant","why":"Ratio gap","days":[[87,100,80],[48,100,75],[86,100,80],[48,100,75],[86,100,80]]},{"name":"Roaring Redwoods","staffing":87,"staffingBand":"Needs Improvement","lead":65,"leadBand":"At Risk","mix":73,"mixBand":"Needs Improvement","overall":76,"verdict":"Not compliant","why":"Ratio gap","days":[[88,65,73],[85,65,73],[88,65,73],[85,65,73],[88,65,73]]}]},{"campus":"West 85th","month":"2026-09","groups":[{"name":"Evergreen","staffing":86,"staffingBand":"Needs Improvement","lead":"Not required","leadBand":"Not required","mix":65,"mixBand":"At Risk","overall":77,"verdict":"Not compliant","why":"Ratio gap","days":[[86,null,65],[86,null,65],[86,null,65],[86,null,65],[86,null,65]]},{"name":"Wandering Willows (A)","staffing":65,"staffingBand":"At Risk","lead":"Not required","leadBand":"Not required","mix":76,"mixBand":"Needs Improvement","overall":70,"verdict":"Not compliant","why":"Ratio gap","days":[[61,null,74],[64,null,79],[60,null,76],[61,null,74],[80,null,77]]},{"name":"Wandering Willows (A1)","staffing":61,"staffingBand":"At Risk","lead":"Not required","leadBand":"Not required","mix":74,"mixBand":"Needs Improvement","overall":67,"verdict":"Not compliant","why":"Ratio gap","days":[[61,null,74],[53,null,75],[60,null,76],[61,null,74],[70,null,73]]},{"name":"Wandering Willows (B)","staffing":49,"staffingBand":"Critical","lead":"Not required","leadBand":"Not required","mix":65,"mixBand":"At Risk","overall":56,"verdict":"Not compliant","why":"Ratio gap","days":[[48,null,66],[52,null,64],[41,null,65],[46,null,66],[57,null,64]]},{"name":"Wandering Willows (B1)","staffing":51,"staffingBand":"At Risk","lead":"Not required","leadBand":"Not required","mix":63,"mixBand":"At Risk","overall":56,"verdict":"Not compliant","why":"Ratio gap","days":[[46,null,62],[52,null,64],[52,null,64],[48,null,59],[57,null,64]]},{"name":"Wandering Willows (C)","staffing":82,"staffingBand":"Needs Improvement","lead":"Not required","leadBand":"Not required","mix":67,"mixBand":"At Risk","overall":75,"verdict":"Not compliant","why":"Ratio gap","days":[[78,null,69],[78,null,66],[85,null,66],[76,null,69],[91,null,66]]},{"name":"Wandering Willows (C1)","staffing":82,"staffingBand":"Needs Improvement","lead":"Not required","leadBand":"Not required","mix":67,"mixBand":"At Risk","overall":75,"verdict":"Not compliant","why":"Ratio gap","days":[[78,null,69],[78,null,66],[85,null,66],[76,null,69],[91,null,66]]},{"name":"Jumping Junipers","staffing":76,"staffingBand":"Needs Improvement","lead":"Not required","leadBand":"Not required","mix":75,"mixBand":"Needs Improvement","overall":75,"verdict":"Not compliant","why":"Ratio gap","days":[[74,null,75],[76,null,75],[76,null,75],[76,null,75],[76,null,75]]},{"name":"Pondering Pines","staffing":70,"staffingBand":"At Risk","lead":"Not required","leadBand":"Not required","mix":71,"mixBand":"Needs Improvement","overall":71,"verdict":"Not compliant","why":"Ratio gap","days":[[70,null,71],[70,null,71],[70,null,71],[70,null,71],[70,null,71]]},{"name":"Roaring Redwoods","staffing":100,"staffingBand":"Strong","lead":"Not required","leadBand":"Not required","mix":72,"mixBand":"Needs Improvement","overall":88,"verdict":"Needs Improvement","why":null,"days":[[100,null,72],[100,null,72],[100,null,72],[100,null,72],[100,null,72]]}]}];
+
+// framework.ts band() and cuts.
+const OVERALL = [65, 80, 90];
+const CUTS = { overall: OVERALL, staffing: [50, 75, 90], lead: [65, 75, 100], mix: [60, 70, 80] };
+const band = (v, c) => v >= c[2] ? 'Strong' : v >= c[1] ? 'Needs Improvement' : v >= c[0] ? 'At Risk' : 'Critical';
+const SLUG = { Strong: 'b-strong', 'Needs Improvement': 'b-needs', 'At Risk': 'b-risk', Critical: 'b-crit' };
+// The measure a group's Not compliant reason sits behind (review.ts metricOf).
+const WHY = { 'Ratio gap': 'staffing', 'Nobody scheduled': 'staffing', 'No Lead': 'staffing', 'Lead gap': 'staffing', 'Developing Lead': 'lead', Mentoring: 'mix' };
+
+const DOMAINS = ['Program & Curriculum', 'People & Capability', 'Child Experience', 'Health, Safety & Supervision', 'Family Experience', 'Operational Systems & Compliance'];
+const SHORT = { 'Program & Curriculum': 'Program', 'People & Capability': 'People', 'Child Experience': 'Child', 'Health, Safety & Supervision': 'Health & Safety', 'Family Experience': 'Family', 'Operational Systems & Compliance': 'Operations' };
+// unit: what the measure looks at. Only a groups measure breaks down by group and opens the Schedule.
+const PEOPLE = [
+  { key: 'staffing', name: 'Staffing Coverage', real: true, unit: 'groups' },
+  { key: 'lead', name: 'Lead Competency', real: true, unit: 'groups' },
+  { key: 'mix', name: 'Teacher Competency Mix', real: true, unit: 'groups' },
+  { key: 'vol', name: 'Voluntary Attrition', unit: 'staff' },
+  { key: 'early', name: 'Early Day Attrition', unit: 'staff' },
+];
+
+function sample(label) { let h = 2166136261; for (const c of label) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return 45 + (Math.abs(h) % 48); }
+const avg = (xs) => { const v = xs.filter((x) => typeof x === 'number'); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null; };
+const $ = (id) => document.getElementById(id);
+const samplesOn = () => $('samples').checked;
+function store(k, v) { try { if (v === undefined) return sessionStorage.getItem(k); sessionStorage.setItem(k, v); } catch { return null; } }
+const view = () => store('cd-view') || 'tiles';
+const scored = (score, cutKey = 'overall') => ({ score, cutKey, band: score == null ? null : band(score, CUTS[cutKey]) });
+const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
+// Limiting judgement. Tier 0: a measure reads Critical. Tier 1: a group is not compliant on it. Tier 2: neither.
+// Tier 3: not measured (a Sample number or no data). Only tiers 0-2 rank or average; a Sample never moves an order.
+function measure(c, m, d) {
+  if (!m.real) return samplesOn() ? { ...scored(sample(c.campus + m.key)), sample: true, tier: 3 } : { ...scored(null), tier: 3 };
+  const s = scored(avg(c.groups.map((g) => g[m.key])), m.key);
+  const failing = c.groups.filter((g) => g.verdict === 'Not compliant' && WHY[g.why] === m.key).length;
+  return { ...s, real: true, failing, domain: d, tier: s.band === 'Critical' ? 0 : failing ? 1 : 2 };
+}
+function judge(ms) {
+  const live = ms.filter((x) => x.tier < 3);
+  return { tier: live.length ? Math.min(...live.map((x) => x.tier)) : 3 };
+}
+function domain(c, d) {
+  if (d === 'People & Capability') {
+    const ms = PEOPLE.map((m) => ({ name: m.name, m, ...measure(c, m, d) }));
+    const real = ms.filter((x) => x.real);
+    return { ...scored(avg(real.map((x) => x.score))), ms, ...judge(ms), measured: `${real.length} of ${ms.length} measures` };
+  }
+  return samplesOn() ? { ...scored(sample(c.campus + d)), sample: true, tier: 3 } : { ...scored(null), tier: 3 };
+}
+function campusScore(c) {
+  const ds = DOMAINS.map((d) => ({ name: d, ...domain(c, d) }));
+  const live = ds.filter((d) => d.tier < 3);
+  return { ...scored(avg(live.map((d) => d.score))), ds, ...judge(ds.flatMap((d) => d.ms || [])), measured: live };
+}
+const measuredNote = (live) => `From ${live.length} of ${DOMAINS.length} domains: ${live.map((d) => d.name).join(', ')}`;
+
+// Score colour steps at the overall cuts, DESIGN.md tokens only. A colour-mix between them drifted into an
+// orange that read as Signal Orange, and an olive at 84.
+const STEP = [[90, 'green'], [80, 'amber'], [65, 'red'], [-Infinity, 'critical']];
+const WASH = { green: 'green', amber: 'amber', red: 'red', critical: 'red' };
+const stepOf = (s) => STEP.find(([v]) => s >= v)[1];
+// Edge, bar and a light wash of the score's colour on every tile (Ali, 2026-10-14). An empty tile stays white.
+const paint = (s) => s == null ? '' : `--fill:var(--${stepOf(s)});--wash:var(--${WASH[stepOf(s)]}-wash)`;
+// review.ts BAR_CUTS + bandPos: each band takes a quarter of the bar.
+const CUT4 = { overall: [0, 65, 80, 90], staffing: [0, 50, 75, 90], lead: [0, 65, 75, 100], mix: [0, 60, 70, 80] };
+function bandPos(value, cuts) {
+  const v = Math.max(0, Math.min(100, value));
+  let i = 3;
+  while (i > 0 && v < cuts[i]) i--;
+  const lo = cuts[i], hi = i < 3 ? cuts[i + 1] : 100;
+  return (i + Math.min(1, Math.max(0, hi > lo ? (v - lo) / (hi - lo) : 1))) * 25;
+}
+
+const slug = (s) => encodeURIComponent(s);
+const fba = (c) => 'FBA ' + c.campus;
+const monthName = (m) => new Date(m + '-15').toLocaleString('en-CA', { month: 'long', year: 'numeric' });
+const bar = (score, label, hidden, cutKey, quiet) => `<span class="bar${quiet || score == null ? ' plain' : ''}" ${hidden ? 'aria-hidden="true"' : `role="img" aria-label="${esc(label)}: ${score == null ? 'no data yet' : `${score} of 100`}"`}>${
+  score == null ? '' : quiet ? `<i style="width:${score}%"></i>` : `<span></span><span></span><span></span><span></span><i style="width:${bandPos(score, CUT4[cutKey || 'overall'])}%"></i>`}</span>`;
+
+// A tile: name, score, bar. No band word anywhere on the dashboard (Ali, 2026-10-14): campus and domain tiles
+// take their score's colour (plain), measure and group tiles their band's colour on the measure's own cuts,
+// and no verdict word either: a group failing this measure keeps only the faint red tint. An empty tile is grey.
+function tile({ name, score, band: b, sample: isSample, href, open, plain, none, cutKey }) {
+  // A Sample is coloured like a real score (Ali, 2026-10-14: the mockup shows everything); no tag (Ali, 2026-10-14: the
+  // notice up top says the page is a mockup); a dashed edge still marks it, and it still never ranks or averages. Only a missing score is grey.
+  const quiet = score == null;
+  const tag = href || open ? 'button' : 'div';
+  const style = plain && !quiet ? paint(score) : '';
+  const attrs = href ? `type="button" data-href="${href}"` : open ? `type="button" data-open="${esc(open)}"` : '';
+  return `<${tag} class="tile ${quiet ? 'b-none' : plain ? '' : SLUG[b]}${isSample ? ' is-sample' : ''}"${style ? ` style="${style}"` : ''} ${attrs}>
+    <span class="tile-head"><span class="tile-name">${esc(name)}</span></span>
+    <span class="tile-value-row">${score == null ? `<span class="tile-none">${esc(none || 'No data yet')}</span>` : `<span class="tile-value">${score}</span>`}</span>
+    ${bar(score, name, true, cutKey, quiet)}
+  </${tag}>`;
+}
+
+const card = (title, body) => `<section class="kpi-card" aria-label="${esc(title)}"><span class="kpi-title">${esc(title)}</span>${body}</section>`;
+const scoreBody = (title, s, opts = {}) => `<span class="kpi-row"><span class="kpi-value">${s.score ?? 'No data'}${s.score == null ? '' : '<small> /100</small>'}</span></span>`
+  + `<span${opts.byBand ? ` class="${s.band ? SLUG[s.band] : 'b-none'}"` : ` style="${paint(s.score)}"`}>${bar(s.score, title, false, s.cutKey)}</span>`
+  + (opts.note ? `<span class="kpi-note">${esc(opts.note)}</span>` : '');
+const scoreCard = (title, s, opts = {}) => card(title, scoreBody(title, s, opts));
+function crumbs(parts) {
+  return `<nav class="crumbs" aria-label="Breadcrumb"><ol>${parts.map(([label, href], i) =>
+    `<li>${i === parts.length - 1 ? `<span aria-current="page">${esc(label)}</span>` : `<button type="button" data-href="${href}">${esc(label)}</button>`}</li>`).join('')}</ol></nav>`;
+}
+const head = (title, lede, right = '') => `<div class="pagehead"><div><h2 tabindex="-1">${esc(title)}</h2>${lede ? `<p class="lede">${esc(lede)}</p>` : ''}</div>${right}</div>`;
+const order = (rows, worst = $('sort').value === 'worst') => worst
+  // Worst first is the score alone, Samples included (audit 2026-10-14): with the notes gone, a hidden tier made
+  // the order read as broken (69 before 55). An empty score goes last.
+  ? [...rows].sort((a, b) => (a.score ?? 999) - (b.score ?? 999) || a.name.localeCompare(b.name))
+  : [...rows].sort((a, b) => a.name.localeCompare(b.name));
+const cols = (n) => n <= 3 ? 3 : n <= 5 ? n : [5, 4, 3].sort((a, b) => (a - n % a) % a - (b - n % b) % b)[0];
+const grid = (n, html) => `<div class="grid" style="--cols:${cols(n)}">${html}</div>`;
+
+function level1() {
+  const rows = DATA.map((c) => ({ c, name: fba(c), ...campusScore(c) }));
+  const toggle = `<span class="seg" role="group" aria-label="View">${['tiles', 'matrix'].map((v) => `<button type="button" data-view="${v}" aria-pressed="${view() === v}">${v === 'tiles' ? 'Tiles' : 'Matrix'}</button>`).join('')}</span>`;
+  const top = `<div class="kpis">${networkCard(rows)}</div>`;
+  const body = view() === 'matrix' ? matrix(order(rows))
+    : grid(rows.length, order(rows).map((r) => tile({ ...r, plain: true, href: `#/${slug(r.c.campus)}` })).join(''));
+  return head('All campuses', '', toggle) + top + body;
+}
+// One card: the network score, then each domain averaged across the network (Ali, 2026-10-14). A domain
+// with no measured campus shows its Sample average, coloured and italic like the matrix, with no tag.
+function networkCard(rows) {
+  const ds = DOMAINS.map((name) => {
+    const xs = rows.map((r) => r.ds.find((x) => x.name === name));
+    const live = xs.filter((x) => x.tier < 3), samples = xs.filter((x) => x.sample);
+    return live.length ? { name, score: avg(live.map((x) => x.score)) }
+      : samples.length ? { name, score: avg(samples.map((x) => x.score)), sample: true } : { name, score: null };
+  });
+  const net = scoreBody('Network score', scored(avg(rows.map((r) => r.score))), { note: measuredNote(rows[0].measured) });
+  // Sorted with the page's Sort control, so worst first reads down the left column.
+  return card('Network score', `<div class="split"><div class="split-score">${net}</div><ul class="dbars" aria-label="By domain">${order(ds).map((d) => {
+    const quiet = d.score == null;
+    return `<li><span class="dname">${esc(d.name)}</span>`
+      + `<b${quiet ? ' class="none"' : d.sample ? ' class="is-sample"' : ''}>${d.score ?? 'No data'}</b>`
+      + `<span${quiet ? ' class="b-none"' : ` style="${paint(d.score)}"`}>${bar(d.score, d.name, true, 'overall')}</span></li>`;
+  }).join('')}</ul></div>`);
+}
+function matrix(rows) {
+  const cell = (d) => d.score == null ? '<span class="cell none">No data</span>'
+    : `<span class="cell${d.sample ? ' is-sample' : ''}" style="background:var(--${WASH[stepOf(d.score)]}-tint);box-shadow:inset 0 -3px 0 var(--${stepOf(d.score)})">${d.score}</span>`;
+  return `<div class="matrix-wrap"><table class="matrix"><caption class="sr">Campus and domain scores</caption><thead><tr><th scope="col">Campus</th><th scope="col">Overall</th>${DOMAINS.map((d) => `<th scope="col">${esc(SHORT[d])}</th>`).join('')}</tr></thead><tbody>
+    ${rows.map((r) => `<tr><td><button type="button" data-href="#/${slug(r.c.campus)}">${esc(r.name)}</button></td><td>${cell(r)}</td>${r.ds.map((d) => `<td>${cell(d)}</td>`).join('')}</tr>`).join('')}
+    </tbody></table></div>`;
+}
+function level2(c) {
+  const cs = campusScore(c);
+  return crumbs([['All campuses', '#/'], [fba(c)]]) + head(fba(c), monthName(c.month))
+    + `<div class="kpis">${scoreCard('Campus score', cs, { note: measuredNote(cs.measured) })}</div>`
+    + grid(cs.ds.length, order(cs.ds).map((d) => tile({ ...d, plain: true, none: 'Not measured yet', href: `#/${slug(c.campus)}/${slug(d.name)}` })).join(''));
+}
+function level3(c, d) {
+  const top = crumbs([['All campuses', '#/'], [fba(c), `#/${slug(c.campus)}`], [d]]) + head(d, fba(c));
+  if (d !== 'People & Capability') return top + `<div class="empty">The measures for ${esc(d)} aren't defined yet.</div>`;
+  const ds = domain(c, d);
+  return top + `<div class="kpis">${scoreCard('Domain score', ds, { note: `From ${ds.measured}` })}</div>`
+    + grid(ds.ms.length, order(ds.ms).map((x) => tile({ ...x, none: x.real ? 'Not required' : 'No data yet', href: `#/${slug(c.campus)}/${slug(d)}/${x.m.key}` })).join(''));
+}
+function level4(c, d, key) {
+  const m = PEOPLE.find((x) => x.key === key);
+  const top = crumbs([['All campuses', '#/'], [fba(c), `#/${slug(c.campus)}`], [d, `#/${slug(c.campus)}/${slug(d)}`], [m.name]])
+    + head(m.name, m.unit === 'groups' ? `${fba(c)}, week average` : fba(c));
+  if (m.unit !== 'groups') return top + `<div class="empty">${esc(m.name)} is measured on ${esc(m.unit)}, so it will break down by role and month here. No data source yet.</div>`;
+  const groups = c.groups.map((g) => {
+    const score = typeof g[key] === 'number' ? g[key] : null, b = g[key + 'Band'];
+    return { name: g.name, score, band: SLUG[b] ? b : null, none: b, cutKey: key, open: `${fba(c)}|${g.name}` };
+  });
+  return top + `<div class="kpis">${scoreCard(m.name, measure(c, m, d), { byBand: true })}</div>`
+    + grid(groups.length, order(groups).map(tile).join(''));
+}
+
+function render(announce) {
+  const [cs, d, k] = location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
+  const c = DATA.find((x) => x.campus === cs);
+  const app = $('app');
+  app.innerHTML = !c ? level1() : !d ? level2(c) : !k ? level3(c, d) : level4(c, d, k);
+  if (announce) $('live').textContent = announce;
+  else if (render.moved) app.querySelector('h2')?.focus({ preventScroll: true });
+  render.moved = true;
+}
+document.addEventListener('click', (e) => {
+  const v = e.target.closest('[data-view]'); if (v) { store('cd-view', v.dataset.view); render(v.dataset.view === 'matrix' ? 'Showing the matrix.' : 'Showing tiles.'); $('app').querySelector(`[data-view="${v.dataset.view}"]`)?.focus(); return; }
+  const o = e.target.closest('[data-open]'); if (o) { const [c, g] = o.dataset.open.split('|'); alert(`In the app this opens ${c} in the Schedule at ${g}.`); return; }
+  const el = e.target.closest('[data-href]'); if (el) location.hash = el.dataset.href.slice(1) || '/';
+});
+// Escape goes up one level, like the last breadcrumb.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || e.target.closest('select')) return;
+  const up = [...document.querySelectorAll('.crumbs button')].pop();
+  if (up) location.hash = up.dataset.href.slice(1) || '/';
+});
+addEventListener('hashchange', () => { render(); scrollTo(0, 0); });
+$('sort').addEventListener('change', () => render(`Sorted ${$('sort').value === 'worst' ? 'worst first' : 'A to Z'}.`));
+$('samples').addEventListener('change', () => render($('samples').checked ? 'Sample numbers shown.' : 'Sample numbers hidden.'));
+render();
+</script>
+</body>
+</html>
