@@ -206,7 +206,7 @@ const scored = (score, cutKey = 'overall') => ({ score, cutKey, band: score == n
 const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
 // Limiting judgement. Tier 0: a measure reads Critical. Tier 1: a group is not compliant on it. Tier 2: neither.
-// Tier 3: not measured (a Sample number or no data). Only tiers 0-2 rank or average; a Sample never moves an order.
+// Tier 3: not measured (a Sample number or no data). The campus score averages every domain, Samples included (Ali, 2026-10-14).
 function measure(c, m, d) {
   if (!m.real) return samplesOn() ? { ...scored(sample(c.campus + m.key)), sample: true, tier: 3 } : { ...scored(null), tier: 3 };
   const s = scored(avg(c.groups.map((g) => g[m.key])), m.key);
@@ -227,10 +227,8 @@ function domain(c, d) {
 }
 function campusScore(c) {
   const ds = DOMAINS.map((d) => ({ name: d, ...domain(c, d) }));
-  const live = ds.filter((d) => d.tier < 3);
-  return { ...scored(avg(live.map((d) => d.score))), ds, ...judge(ds.flatMap((d) => d.ms || [])), measured: live };
+  return { ...scored(avg(ds.map((d) => d.score))), ds, ...judge(ds.flatMap((d) => d.ms || [])) };
 }
-const measuredNote = (live) => `From ${live.length} of ${DOMAINS.length} domains: ${live.map((d) => d.name).join(', ')}`;
 
 // Score colour steps at the overall cuts, DESIGN.md tokens only. A colour-mix between them drifted into an
 // orange that read as Signal Orange, and an olive at 84.
@@ -260,7 +258,7 @@ const bar = (score, label, hidden, cutKey, quiet) => `<span class="bar${quiet ||
 // and no verdict word either: a group failing this measure keeps only the faint red tint. An empty tile is grey.
 function tile({ name, score, band: b, sample: isSample, href, open, plain, none, cutKey }) {
   // A Sample is coloured like a real score (Ali, 2026-10-14: the mockup shows everything); no tag (Ali, 2026-10-14: the
-  // notice up top says the page is a mockup); a dashed edge still marks it, and it still never ranks or averages. Only a missing score is grey.
+  // notice up top says the page is a mockup); a dashed edge still marks it, and it counts in the campus average. Only a missing score is grey.
   const quiet = score == null;
   const tag = href || open ? 'button' : 'div';
   const style = plain && !quiet ? paint(score) : '';
@@ -307,7 +305,7 @@ function networkCard(rows) {
     return live.length ? { name, score: avg(live.map((x) => x.score)) }
       : samples.length ? { name, score: avg(samples.map((x) => x.score)), sample: true } : { name, score: null };
   });
-  const net = scoreBody('Network score', scored(avg(rows.map((r) => r.score))), { note: measuredNote(rows[0].measured) });
+  const net = scoreBody('Network score', scored(avg(rows.map((r) => r.score))));
   // Sorted with the page's Sort control, so worst first reads down the left column.
   return card('Network score', `<div class="split"><div class="split-score">${net}</div><ul class="dbars" aria-label="By domain">${order(ds).map((d) => {
     const quiet = d.score == null;
@@ -326,7 +324,7 @@ function matrix(rows) {
 function level2(c) {
   const cs = campusScore(c);
   return crumbs([['All campuses', '#/'], [fba(c)]]) + head(fba(c), monthName(c.month))
-    + `<div class="kpis">${scoreCard('Campus score', cs, { note: measuredNote(cs.measured) })}</div>`
+    + `<div class="kpis">${scoreCard('Campus score', cs)}</div>`
     + grid(cs.ds.length, order(cs.ds).map((d) => tile({ ...d, plain: true, none: 'Not measured yet', href: `#/${slug(c.campus)}/${slug(d.name)}` })).join(''));
 }
 function level3(c, d) {
