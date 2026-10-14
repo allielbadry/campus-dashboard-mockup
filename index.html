@@ -196,7 +196,14 @@ const PEOPLE = [
   { key: 'early', name: 'Early Day Attrition', unit: 'staff' },
 ];
 
-function sample(label) { let h = 2166136261; for (const c of label) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return 45 + (Math.abs(h) % 48); }
+// Sample spread (Ali, 2026-10-14): most campuses read green, the two with the lowest real People scores read red,
+// and about one strong-campus domain in eight dips red so the page shows every colour.
+const WEAK = ['Centennial', 'Bridgeland'];
+function sample(label) {
+  let h = 2166136261; for (const c of label) h = Math.imul(h ^ c.charCodeAt(0), 16777619); h = Math.abs(h);
+  if (WEAK.some((w) => label.startsWith(w))) return 45 + (h % 20);
+  return h % 8 === 0 ? 52 + (h % 12) : 92 + (h % 8);
+}
 const avg = (xs) => { const v = xs.filter((x) => typeof x === 'number'); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null; };
 const $ = (id) => document.getElementById(id);
 const samplesOn = () => $('samples').checked;
